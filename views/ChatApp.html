@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div>
+        <div id="message"></div><br></br>
+        <input type="text" id="nickname" value="" placeholder="enter your nickname">
+        <button onclick="setUserName()">start chatting !</button>
+        <div id="err-container" style="color:red"></div>
+        <div id="limit-message"></div><br></br>
+
+
+        <ul class="list-group" id="info">
+
+        </ul>
+        <div id="chat-screen">
+
+        </div>
+
+        <ul class="list-group" id="msg-list">
+
+        </ul>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        let socket=io()
+
+        var room="abc123"
+
+        socket.on('connect',function(){            
+            socket.emit('room',room)        
+        })
+        
+        socket.on('admin-message', function(msg) {
+          document.getElementById('message').innerHTML = msg;
+        });
+
+        socket.on('limit-exceeded', function(msg) {
+          document.getElementById('limit-message').innerHTML = msg;
+        });
+
+        function setUserName(){
+            let data=document.getElementById('nickname').value
+            socket.emit('setUsername',data)
+        }
+        let globalname;
+        socket.on('userSet',(data)=>{
+            globalname=data.username
+            document.getElementById('info').innerHTML+=`
+            <li class="list-group-item list-group-item-secondary">Hey ! ${data.username} , ${data.msg}</li>
+            `
+            document.getElementById('chat-screen').innerHTML='<input type="text" placeholder="enter your message" id="msg" value=""></input> <button onclick="sendMessage()">send</button>'
+        })
+        function sendMessage(){
+            
+            socket.emit('message',{msg:document.getElementById('msg').value,username:globalname})
+            console.log(room)
+        }
+        socket.on('setMessage',(data)=>{
+            console.log("hit")
+            document.getElementById('msg-list').innerHTML+=`
+            <li class="list-group-item list-group-item-success"><b>${data.username}</b>: ${data.msg}</li>
+            `
+        })
+    </script>
+</body>
+</html>
